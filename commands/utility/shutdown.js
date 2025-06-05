@@ -8,9 +8,9 @@ module.exports = {
         .setDescription('Shuts down the bot (owner only)'),
     async execute(interaction) {
         if (interaction.user.id !== OWNER_ID) {
-            return interaction.reply({ content: 'You do not have permission to use this command.', ephemeral: true });
+            return interaction.reply({ content: 'In your dreams!', ephemeral: true });
         }
-        await interaction.editReply({content: 'Shutting down...', ephemeral: true});
+        await interaction.reply({content: 'Shutting down...', ephemeral: true});
         console.log('Shutting down the bot...');
         await interaction.client.destroy();
         process.exit(0);
