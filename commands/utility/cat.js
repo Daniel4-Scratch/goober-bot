@@ -5,11 +5,12 @@ module.exports = {
 		.setName('cat')
 		.setDescription('Returns a random cat image'),
 	async execute(interaction) {
+		await interaction.deferReply({ ephemeral: false });
 		const response = await fetch('https://api.thecatapi.com/v1/images/search');
 		const data = await response.json();
 		if (!data || !data[0] || !data[0].url) {
-			return interaction.reply('Could not fetch a cat image at this time.');
+			return interaction.editReply('Could not fetch a cat image at this time.');
 		}
-		await interaction.reply({ content: data[0].url, allowedMentions: { repliedUser: false } });
+		await interaction.editReply({ content: data[0].url, allowedMentions: { repliedUser: false } });
 	},
 };

@@ -10,7 +10,8 @@ module.exports = {
         if (interaction.user.id !== OWNER_ID) {
             return interaction.reply({ content: 'You do not have permission to use this command.', ephemeral: true });
         }
-        await interaction.reply('Shutting down...');
+        await interaction.editReply({content: 'Shutting down...', ephemeral: true});
+        console.log('Shutting down the bot...');
         await interaction.client.destroy();
         process.exit(0);
     },
