@@ -49,6 +49,13 @@ client.on(Events.InteractionCreate, async interaction => {
 		}
 	}
 });
+
+const { handleButtonInteraction } = require('./commands/fun/gamble.js');
+client.on('interactionCreate', async interaction => {
+  if (interaction.isButton()) {
+    await handleButtonInteraction(interaction);
+  }
+});
 // When the client is ready, run this code (only once).
 // The distinction between `client: Client<boolean>` and `readyClient: Client<true>` is important for TypeScript developers.
 // It makes some properties non-nullable.
