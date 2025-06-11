@@ -1,5 +1,13 @@
 const { SlashCommandBuilder, ButtonBuilder, ButtonStyle, ActionRowBuilder } = require('discord.js');
+const { Double } = require('mongodb');
 const { connect, getCollection, close, isDatabaseOnline } = require('../../mongodb.js');
+
+const exitQuotes = [
+    "99% of gamblers quit before they hit big",
+    "The only way to win is to go all in",
+    "You can't win if you don't play",
+    "Winning isn't everything, it's the only thing"
+];
 
 const buttons = {
     createAccountRow: new ActionRowBuilder().addComponents(
@@ -53,7 +61,8 @@ module.exports = {
                 // User exists, proceed with the gambling logic
                 return interaction.editReply({
                     content: `Welcome home darling <a:monkey_straw:1338391460252483605>
-                    Balance: ${user.balance} coins`.replace(/^[ \t]+/gm, ''),
+                    Balance: ${user.balance} coins
+                    Owed (fancy for debt): ${user.owed} coins`.replace(/^[ \t]+/gm, ''),
                     components: [buttons.existingUser]
                 });
             }
@@ -105,7 +114,8 @@ module.exports.handleButtonInteraction = async (interaction) => {
                 } else {
                     await gambleCollection.insertOne({
                         userId: String(userId),
-                        balance: 1000 // Starting balance
+                        balance: new Double(1000), // Starting balance as Double
+                        owed: new Double(0)
                     });
                 }
                 return await interaction.editReply({
@@ -124,7 +134,7 @@ module.exports.handleButtonInteraction = async (interaction) => {
                 return await interaction.editReply('ts not working yet vro');
             }else if(interArray[1] == "cancel"){
                 return await interaction.editReply({
-                    content: '99% of gamblers quit before they hit big',
+                    content: exitQuotes[Math.floor(Math.random() * exitQuotes.length)],
                     components: []
                 });
             }
