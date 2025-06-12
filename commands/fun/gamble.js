@@ -164,7 +164,7 @@ module.exports.handleButtonInteraction = async (interaction) => {
                 if (roll === 1) {
                     // User wins
                     existingUser.balance += new Double(betAmount*2);
-                    await gambleCollection.updateOne({ userId: String(userId) }, { $set: { balance: existingUser.balance } });
+                    await gambleCollection.updateOne({ userId: String(userId) }, { $set: { balance: new Double(existingUser.balance) } });
                     return await interaction.editReply({
                         content: `You won! Your new balance is ${existingUser.balance} coins.`,
                         components: [buttons.existingUser]
@@ -172,7 +172,7 @@ module.exports.handleButtonInteraction = async (interaction) => {
                 } else {
                     // User loses
                     existingUser.balance -= new Double(betAmount);
-                    await gambleCollection.updateOne({ userId: String(userId) }, { $set: { balance: existingUser.balance } });
+                    await gambleCollection.updateOne({ userId: String(userId) }, { $set: { balance: new Double(existingUser.balance) } });
                     return await interaction.editReply({
                         content: `You lost. Your new balance is ${existingUser.balance} coins.`,
                         components: [buttons.existingUser]
@@ -192,7 +192,7 @@ module.exports.handleButtonInteraction = async (interaction) => {
                     existingUser.balance += new Double(loanAmount);
                     existingUser.owed += new Double(loanAmount * 1.1); // 10% interest
                     existingUser.lastLoan = timeNow;
-                    await gambleCollection.updateOne({ userId: String(userId) }, { $set: { balance: existingUser.balance, owed: existingUser.owed, lastLoan: existingUser.lastLoan } });
+                    await gambleCollection.updateOne({ userId: String(userId) }, { $set: { balance: new Double(existingUser.balance), owed: new Double(existingUser.owed), lastLoan: new Double(existingUser.lastLoan) } });
                     return await interaction.editReply({
                         content: `You took a loan of ${loanAmount} coins. Your new balance is ${existingUser.balance} coins and you owe ${existingUser.owed} coins.`,
                         components: [buttons.existingUser]
@@ -220,7 +220,7 @@ module.exports.handleButtonInteraction = async (interaction) => {
                 }
                 existingUser.balance -= new Double(payAmount);
                 existingUser.owed -= new Double(payAmount);
-                await gambleCollection.updateOne({ userId: String(userId) }, { $set: { balance: existingUser.balance, owed: existingUser.owed } });
+                await gambleCollection.updateOne({ userId: String(userId) }, { $set: { balance: new Double(existingUser.balance), owed: new Double(existingUser.owed) } });
                 return await interaction.editReply({
                     content: `You paid ${payAmount} coins towards your debt. Your new balance is ${existingUser.balance} coins and you owe ${existingUser.owed} coins.`,
                     components: [buttons.existingUser]
