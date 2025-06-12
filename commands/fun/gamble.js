@@ -182,7 +182,7 @@ module.exports.handleButtonInteraction = async (interaction) => {
                 const timeNow = Date.now();
                 existingUser.lastLoan = existingUser.lastLoan;
                 const lastLoanHours = Math.floor((timeNow - existingUser.lastLoan) / (1000 * 60 * 60));
-                if (lastLoanHours <= 1){
+                if (false){
                     return await interaction.editReply({
                         content: `You can only take a loan once every hour. Please wait ${1 - lastLoanHours} hour(s) before taking another loan.`,
                         components: [buttons.existingUser]
