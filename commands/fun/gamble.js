@@ -12,28 +12,32 @@ const exitQuotes = [
 const buttons = {
     createAccountRow: new ActionRowBuilder().addComponents(
         new ButtonBuilder()
-            .setCustomId('car_create')
+            .setCustomId('gamble_car_create')
             .setLabel('Create Account')
             .setStyle(ButtonStyle.Primary),
         new ButtonBuilder()
-            .setCustomId('car_cancel')
+            .setCustomId('gamble_car_cancel')
             .setLabel('Cancel')
             .setStyle(ButtonStyle.Secondary)
     ),
     existingUser: new ActionRowBuilder().addComponents(
         new ButtonBuilder()
-            .setCustomId('eu_dice')
-            .setLabel('Roll Dice')
-            .setStyle(ButtonStyle.Primary)
-            .setDisabled(true),
+            .setCustomId('gamble_eu_slots')
+            .setLabel('Roll Slots (100 coins)')
+            .setStyle(ButtonStyle.Primary),
         new ButtonBuilder()
-            .setCustomId('eu_loan')
+            .setCustomId('gamble_eu_loan')
             .setLabel('Take a Loan')
             .setStyle(ButtonStyle.Primary),
         new ButtonBuilder()
-            .setCustomId('eu_cancel')
-            .setLabel('Cancel')
+            .setCustomId('gamble_eu_payLoan')
+            .setLabel('Pay Loan')
+            .setStyle(ButtonStyle.Primary),
+        new ButtonBuilder()
+            .setCustomId('gamble_eu_cancel')
+            .setLabel('Exit')
             .setStyle(ButtonStyle.Secondary)
+
     )
 }
 
@@ -65,8 +69,8 @@ module.exports = {
                 // User exists, proceed with the gambling logic
                 return interaction.editReply({
                     content: `Welcome home darling <a:monkey_straw:1338391460252483605>
-                    Balance: ${user.balance} coins
-                    Owed (fancy for debt): ${user.owed} coins`.replace(/^[ \t]+/gm, ''),
+                    🟩 Balance: ${user.balance} coins
+                    🟥 Owed: ${user.owed} coins`.replace(/^[ \t]+/gm, ''),
                     components: [buttons.existingUser]
                 });
             }
@@ -82,6 +86,11 @@ module.exports = {
         }
     }
 };
+
+module.exports.canHandle = (interaction) => {
+    // Check if the interaction is a button interaction
+    return interaction.isButton() && (interaction.customId.startsWith('gamble_'));
+}
 
 // Handle button interactions for creating an account
 module.exports.handleButtonInteraction = async (interaction) => {
@@ -104,6 +113,7 @@ module.exports.handleButtonInteraction = async (interaction) => {
         const userId = interaction.user.id;
         const existingUser = await gambleCollection.findOne({ userId: String(userId) });
         const interArray = interaction.customId.split('_');
+        interArray.shift();
         if(interArray[0] == "car"){
             if(interArray[1] == "create"){
                 await interaction.editReply({
@@ -135,14 +145,88 @@ module.exports.handleButtonInteraction = async (interaction) => {
                 });
             }
         } else if(interArray[0] == "eu"){
-            if(interArray[1] == "dice"){
-                return await interaction.editReply('ts not working yet vro');
+            if(interArray[1] == "slots"){
+                // 1 out of 6 chance to win, if you win you get double your bet
+                const betAmount = 100; // Example bet amount
+                if (!existingUser) {
+                    return await interaction.editReply({
+                        content: 'You do not have a gambling account. Please create one first.',
+                        components: [buttons.createAccountRow]
+                    });
+                }
+                if (existingUser.balance < betAmount) {
+                    return await interaction.editReply({
+                        content: 'You do not have enough balance to place this bet.',
+                        components: [buttons.existingUser]
+                    });
+                }
+                const roll = Math.floor(Math.random() * 3) + 1; // Roll a dice (1-3)
+                if (roll === 1) {
+                    // User wins
+                    existingUser.balance += new Double(betAmount*2);
+                    await gambleCollection.updateOne({ userId: String(userId) }, { $set: { balance: existingUser.balance } });
+                    return await interaction.editReply({
+                        content: `You won! Your new balance is ${existingUser.balance} coins.`,
+                        components: [buttons.existingUser]
+                    });
+                } else {
+                    // User loses
+                    existingUser.balance -= new Double(betAmount);
+                    await gambleCollection.updateOne({ userId: String(userId) }, { $set: { balance: existingUser.balance } });
+                    return await interaction.editReply({
+                        content: `You lost. Your new balance is ${existingUser.balance} coins.`,
+                        components: [buttons.existingUser]
+                    });
+                }
             }else if(interArray[1] == "loan"){
                 const timeNow = Date.now();
                 existingUser.lastLoan = existingUser.lastLoan;
                 const lastLoanHours = Math.floor((timeNow - existingUser.lastLoan) / (1000 * 60 * 60));
-                return await interaction.editReply(`${lastLoanHours} hours since last loan`);
-            }else if(interArray[1] == "cancel"){
+                if (lastLoanHours <= 1){
+                    return await interaction.editReply({
+                        content: `You can only take a loan once every hour. Please wait ${1 - lastLoanHours} hour(s) before taking another loan.`,
+                        components: [buttons.existingUser]
+                    });
+                }else{
+                    const loanAmount = 500; // Example loan amount
+                    existingUser.balance += new Double(loanAmount);
+                    existingUser.owed += new Double(loanAmount * 1.1); // 10% interest
+                    existingUser.lastLoan = timeNow;
+                    await gambleCollection.updateOne({ userId: String(userId) }, { $set: { balance: existingUser.balance, owed: existingUser.owed, lastLoan: existingUser.lastLoan } });
+                    return await interaction.editReply({
+                        content: `You took a loan of ${loanAmount} coins. Your new balance is ${existingUser.balance} coins and you owe ${existingUser.owed} coins.`,
+                        components: [buttons.existingUser]
+                    });
+                }
+            }else if(interArray[1] == "payLoan"){
+                const payAmount = 100; // Example payment amount
+                if (!existingUser) {
+                    return await interaction.editReply({
+                        content: 'You do not have a gambling account. Please create one first.',
+                        components: [buttons.createAccountRow]
+                    });
+                }
+                if (existingUser.owed <= 0) {
+                    return await interaction.editReply({
+                        content: 'You do not owe any money.',
+                        components: [buttons.existingUser]
+                    });
+                }
+                if (existingUser.balance < payAmount) {
+                    return await interaction.editReply({
+                        content: 'You do not have enough balance to make this payment.',
+                        components: [buttons.existingUser]
+                    });
+                }
+                existingUser.balance -= new Double(payAmount);
+                existingUser.owed -= new Double(payAmount);
+                await gambleCollection.updateOne({ userId: String(userId) }, { $set: { balance: existingUser.balance, owed: existingUser.owed } });
+                return await interaction.editReply({
+                    content: `You paid ${payAmount} coins towards your debt. Your new balance is ${existingUser.balance} coins and you owe ${existingUser.owed} coins.`,
+                    components: [buttons.existingUser]
+                }); 
+            }
+            else if(interArray[1] == "cancel"){
                 return await interaction.editReply({
                     content: exitQuotes[Math.floor(Math.random() * exitQuotes.length)],
                     components: []

@@ -50,10 +50,21 @@ client.on(Events.InteractionCreate, async interaction => {
 	}
 });
 
-const { handleButtonInteraction } = require('./commands/fun/gamble.js');
+// In index.js
+
+const buttonHandlers = [
+  require('./commands/fun/gamble.js'),
+  require('./commands/utility/debug.js'),
+  // Add more handlers here
+];
+
 client.on('interactionCreate', async interaction => {
-  if (interaction.isButton()) {
-    await handleButtonInteraction(interaction);
+  if (!interaction.isButton()) return;
+  for (const handler of buttonHandlers) {
+    if (handler.canHandle && handler.canHandle(interaction)) {
+      await handler.handleButtonInteraction(interaction);
+      return;
+    }
   }
 });
 // When the client is ready, run this code (only once).
