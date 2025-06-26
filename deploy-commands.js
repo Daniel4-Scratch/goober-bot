@@ -38,15 +38,58 @@ for (const folder of commandFolders) {
 const rest = new REST().setToken(token);
 
 // and deploy your commands!
+
+// launch arguments 
+// node deploy-commands.js clear/deploy guild/global
+const args = process.argv.slice(2);
+// example clear all guild commands
+/*
+const data = await rest.put(
+			Routes.applicationGuildCommands(clientId, guildId),
+			{ body: [] },
+		);
+*/
+
 (async () => {
 	try {
 		console.log(`Started refreshing ${commands.length} application (/) commands.`);
 
 		// The put method is used to fully refresh all commands in the guild with the current set
-		const data = await rest.put(
-			Routes.applicationCommands(clientId),
-			{ body: commands },
-		);
+		let data;
+		if (args[0] == 'clear') {
+			if (args[1] == 'guild') {
+				data = await rest.put(
+					Routes.applicationGuildCommands(clientId, guildId),
+					{ body: [] },
+				);
+			} else if (args[1] == 'global') {
+				data = await rest.put(
+					Routes.applicationCommands(clientId),
+					{ body: [] },
+				);
+			} else {
+				console.error('Invalid argument. Use "clear guild" or "clear global".');
+				return;
+			}
+		}else if (args[0] == 'deploy') {
+			if (args[1] == 'guild') {
+				data = await rest.put(
+					Routes.applicationGuildCommands(clientId, guildId),
+					{ body: commands },
+				);
+			} else if (args[1] == 'global') {
+				data = await rest.put(
+					Routes.applicationCommands(clientId),
+					{ body: commands },
+				);
+			} else {
+				console.error('Invalid argument. Use "deploy guild" or "deploy global".');
+				return;
+			}
+		} else {
+			console.error('Invalid argument. Use "clear" or "deploy".');
+			return;
+		}
 
 		console.log(`Successfully reloaded ${data.length} application (/) commands.`);
 	} catch (error) {
