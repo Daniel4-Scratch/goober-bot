@@ -120,7 +120,7 @@ module.exports = {
                         components: []
                     });
                 }else if(interaction.options.getSubcommand() == 'stats') {
-                    const targetUserId = interaction.user.id; // Default to the command user
+                    let targetUserId = interaction.user.id; // Default to the command user
                     if (interaction.options.getUser('user')) {
                         // Fetch stats for the specified user
                         targetUserId = interaction.options.getUser('user').id;
@@ -137,7 +137,8 @@ module.exports = {
                             content: `Here are the stats for <@${targetUserId}> <a:monkey_straw:1338391460252483605>
                             🟩 Balance: ${targetUser.balance} coins
                             🟥 Owed: ${targetUser.owed} coins
-                            "Remember: ${quote}"`.replace(/^[ \t]+/gm, '')
+                            "Remember: ${quote}"`.replace(/^[ \t]+/gm, ''),
+                            allowedMentions: { users: [] }
                         });
                     }
             }
