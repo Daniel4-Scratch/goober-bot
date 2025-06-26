@@ -1,12 +1,11 @@
+const { REST, Routes } = require('discord.js');
 require('dotenv').config();
-const { REST, Routes, Client } = require('discord.js');
 const fs = require('node:fs');
 const path = require('node:path');
 
-const clientId = process.env.discord_client_id;
-const guildId = process.env.discord_guild_id;
-const token = process.env.discord_token;
-const client = new Client({ intents: [] }); // Intents not needed for command deployment
+clientId = process.env.discord_client_id; // Your bot's client ID
+guildId = process.env.discord_guild_id; // Your guild ID (if you want to deploy
+token = process.env.discord_token; // Your bot's token
 
 const commands = [];
 // Grab all the command folders from the commands directory you created earlier
@@ -21,6 +20,12 @@ for (const folder of commandFolders) {
 	for (const file of commandFiles) {
 		const filePath = path.join(commandsPath, file);
 		const command = require(filePath);
+		// check if file has comment at top that says "@ignore" and skip it if it does
+		const fileContent = fs.readFileSync(filePath, 'utf8');
+		if (fileContent.startsWith('// @ignore')) {
+			console.log(`[INFO] Skipping command ${file} due to @ignore comment.`);
+			continue;
+		}
 		if ('data' in command && 'execute' in command) {
 			commands.push(command.data.toJSON());
 		} else {
@@ -36,8 +41,9 @@ const rest = new REST().setToken(token);
 (async () => {
 	try {
 		console.log(`Started refreshing ${commands.length} application (/) commands.`);
+
+		// The put method is used to fully refresh all commands in the guild with the current set
 		const data = await rest.put(
-			//clear guild commands			
 			Routes.applicationCommands(clientId),
 			{ body: commands },
 		);
