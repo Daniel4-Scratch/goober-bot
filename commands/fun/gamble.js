@@ -1,3 +1,4 @@
+// @ignore
 const { SlashCommandBuilder, ButtonBuilder, ButtonStyle, ActionRowBuilder } = require('discord.js');
 const { Double } = require('mongodb');
 const { connect, getCollection, close, isDatabaseOnline } = require('../../mongodb.js');
