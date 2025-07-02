@@ -14,7 +14,7 @@ mongodb_pass=
 ```
 ### Install Dependencies
 ```bash
-npm ci
+npm install
 ```
 ## Debugging
 Deploy commands
